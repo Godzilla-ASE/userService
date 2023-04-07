@@ -55,6 +55,8 @@ public class UserService {
                 follower.setFollowings(String.join(",", followerIdList));
             }
             userRepository.save(follower);
+        }else {
+            throw new IllegalArgumentException("Cannot follow a user you are already followed.");
         }
 
         if (!followedIdList.contains(String.valueOf(userId))) {
@@ -65,6 +67,8 @@ public class UserService {
                 followed.setFans(String.join(",", followedIdList));
             }
             userRepository.save(followed);
+        }else {
+            throw new IllegalArgumentException("Cannot follow a user you are already followed.");
         }
     }
 
@@ -82,12 +86,16 @@ public class UserService {
             followerIdList.remove(String.valueOf(followedId));
             follower.setFollowings(String.join(",", followerIdList));
             userRepository.save(follower);
+        }else {
+            throw new IllegalArgumentException("Cannot unfollow a user you are not following.");
         }
 
         if (followedIdList.contains(String.valueOf(userId))) {
             followedIdList.remove(String.valueOf(userId));
             followed.setFans(String.join(",", followedIdList));
             userRepository.save(followed);
+        }else {
+            throw new IllegalArgumentException("Cannot remove a non-existent follower.");
         }
     }
 
