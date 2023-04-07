@@ -1,4 +1,4 @@
-package com.example.postservice.exceptions;
+package com.example.userservice.exceptions;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

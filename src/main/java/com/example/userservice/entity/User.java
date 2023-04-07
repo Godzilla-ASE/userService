@@ -1,4 +1,4 @@
-package com.example.postservice.entity;
+package com.example.userservice.entity;
 
 
 import lombok.AllArgsConstructor;
@@ -7,8 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
-import java.util.Date;
-import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -41,5 +40,15 @@ public class User {
 
     @Column(name = "location")
     private String location;
+
+    @Column(name = "fans")
+    private String fans;
+
+    @Column(name = "followings")
+    private String followings;
+
+    @Column(name = "haters")
+    private String haters;
+
 
 }
