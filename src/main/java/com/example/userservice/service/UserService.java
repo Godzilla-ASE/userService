@@ -27,6 +27,16 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    public List<String> splitId(String idString){
+        if (idString == null) {
+            idString = "";
+        }
+        String[] idArr = idString.split(",");
+        List<String> idList = new ArrayList<>(Arrays.asList(idArr));
+
+        return idList;
+    }
+
     public void followUser(Long userId, Long followedId) {
         User follower = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Cannot find user with id " + userId));
         User followed = userRepository.findById(followedId).orElseThrow(() -> new ResourceNotFoundException("Cannot find user with id " + followedId));
@@ -34,18 +44,8 @@ public class UserService {
         String followerIds = follower.getFollowings();//关注者的关注列表
         String followedIds = followed.getFans();//被关注者的粉丝列表
 
-        if (followerIds == null) {
-            followerIds = "";
-        }
-        if (followedIds == null) {
-            followedIds = "";
-        }
-
-        // 关注操作，更新关注者和被关注者的id列表
-        String[] followerIdArr = followerIds.split(",");
-        String[] followedIdArr = followedIds.split(",");
-        List<String> followerIdList = new ArrayList<>(Arrays.asList(followerIdArr));
-        List<String> followedIdList = new ArrayList<>(Arrays.asList(followedIdArr));
+        List<String> followerIdList = splitId(followerIds);
+        List<String> followedIdList = splitId(followedIds);
 
         if (!followerIdList.contains(String.valueOf(followedId))) {
             if (followerIds.isEmpty()) {
@@ -64,6 +64,29 @@ public class UserService {
                 followedIdList.add(String.valueOf(userId));
                 followed.setFans(String.join(",", followedIdList));
             }
+            userRepository.save(followed);
+        }
+    }
+
+    public void unfollowUser(Long userId, Long followedId){
+        User follower = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Cannot find user with id " + userId));
+        User followed = userRepository.findById(followedId).orElseThrow(() -> new ResourceNotFoundException("Cannot find user with id " + followedId));
+
+        String followerIds = follower.getFollowings();//关注者的关注列表
+        String followedIds = followed.getFans();//被关注者的粉丝列表
+
+        List<String> followerIdList = splitId(followerIds);
+        List<String> followedIdList = splitId(followedIds);
+
+        if (followerIdList.contains(String.valueOf(followedId))) {
+            followerIdList.remove(String.valueOf(followedId));
+            follower.setFollowings(String.join(",", followerIdList));
+            userRepository.save(follower);
+        }
+
+        if (followedIdList.contains(String.valueOf(userId))) {
+            followedIdList.remove(String.valueOf(userId));
+            followed.setFans(String.join(",", followedIdList));
             userRepository.save(followed);
         }
     }

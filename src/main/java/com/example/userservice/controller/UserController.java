@@ -90,5 +90,11 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
+    @PutMapping("/{userId}/follow")
+    public ResponseEntity<String> unfollowUser(@PathVariable("userId") Long userId, @RequestParam("followedId") Long followedId){
+        // 判断是否已关注自己并移除粉丝和关注者
+        userService.unfollowUser(userId,followedId);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 
 }
