@@ -11,8 +11,8 @@
     <groupId>com.example</groupId>
     <artifactId>userService</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>postService</name>
-    <description>postService</description>
+    <name>userService</name>
+    <description>userService</description>
     <properties>
         <java.version>17</java.version>
     </properties>

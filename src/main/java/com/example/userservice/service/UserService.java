@@ -27,6 +27,18 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    public boolean checkIfUserExists(User user) {
+        Optional<User> userByUsername = userRepository.findByUsername(user.getUsername());
+        return userByUsername.isPresent();
+    }
+
+    public boolean checkPassword(User user){
+        Optional<User> userByUsername = userRepository.findByUsername(user.getUsername());
+        User userCheck = userByUsername.orElseThrow(() -> new RuntimeException("User not found"));
+        String password = userCheck.getPassword();
+        return password.equals(user.getPassword());
+    }
+
     public List<String> splitId(String idString){
         if (idString == null) {
             idString = "";

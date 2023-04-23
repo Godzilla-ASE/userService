@@ -50,5 +50,7 @@ public class User {
     @Column(name = "haters")
     private String haters;
 
+    @Column(name = "avatarUrl")
+    private String avatarUrl;
 
 }

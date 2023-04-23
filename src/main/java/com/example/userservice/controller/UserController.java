@@ -1,7 +1,9 @@
 package com.example.userservice.controller;
 
 import com.example.userservice.entity.User;
+import com.example.userservice.exceptions.InvalidPasswordException;
 import com.example.userservice.exceptions.ResourceNotFoundException;
+import com.example.userservice.exceptions.UnauthorizedException;
 import com.example.userservice.repository.UserRepository;
 
 import com.example.userservice.service.UserService;
@@ -9,8 +11,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 @CrossOrigin("*")
@@ -22,6 +26,8 @@ public class UserController {
     private UserRepository userRepository;
     @Autowired
     private final UserService userService;
+    @Autowired
+    private RestTemplate restTemplate;
 
     UserController(UserService userService) {
         this.userService = userService;
@@ -37,8 +43,19 @@ public class UserController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public User createUser(@RequestBody User user) {
+        User savedUser = userRepository.save(user);
+        Long userId = savedUser.getId();
+
+        // call authServer API to generate token
+        String url = "http://localhost:8081/auth/" + userId;
+        String token = restTemplate.postForObject(url, null, String.class);
+        // set token field in user object
+        user.setToken(token);
+
+        // save user object to database
         return userRepository.save(user);
     }
+
 
     // build get employee by id REST API
     @GetMapping("{id}")
@@ -48,21 +65,25 @@ public class UserController {
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with id:" + id));
         return ResponseEntity.ok(user);
     }
+    
+    @PutMapping("{id}")
+    public ResponseEntity<User> updateUserProfile(@PathVariable Long id, @RequestBody User updatedUser) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
+        if (updatedUser.getUsername()!=null&&!updatedUser.getUsername().isEmpty())
+            user.setUsername(updatedUser.getUsername());
+        if (updatedUser.getBirthday()!=null)
+            user.setBirthday(updatedUser.getBirthday());
+        if (updatedUser.getEmail()!=null)
+            user.setEmail(updatedUser.getEmail());
+        if (updatedUser.getLocation()!=null)
+            user.setLocation(updatedUser.getLocation());
+        if (updatedUser.getAvatarUrl()!=null)
+            user.setAvatarUrl(updatedUser.getAvatarUrl());
 
-//    // build update employee REST API
-//    @PutMapping("{id}")
-//    public ResponseEntity<Employee> updateEmployee(@PathVariable long id,@RequestBody Employee employeeDetails) {
-//        Employee updateEmployee = employeeRepository.findById(id)
-//                .orElseThrow(() -> new ResourceNotFoundException("Employee not exist with id: " + id));
-//
-//        updateEmployee.setFirstName(employeeDetails.getFirstName());
-//        updateEmployee.setLastName(employeeDetails.getLastName());
-//        updateEmployee.setEmailId(employeeDetails.getEmailId());
-//
-//        employeeRepository.save(updateEmployee);
-//
-//        return ResponseEntity.ok(updateEmployee);
-//    }
+        User savedUser = userRepository.save(user);
+        return ResponseEntity.ok(savedUser);
+    }
 
     // build delete employee REST API
     @DeleteMapping("{id}")
@@ -77,6 +98,43 @@ public class UserController {
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
     }
+
+    @PostMapping("/login")
+    @ResponseStatus(HttpStatus.OK)
+    public User loginUser(@RequestBody User user) {
+        User savedUser = userRepository.findByUsername(user.getUsername())
+                .orElseThrow(() -> new ResourceNotFoundException("User not exist with username" + user.getUsername()));
+        if(user.getPassword().equals(savedUser.getPassword())){
+            // call authServer API to generate token
+            String url = "http://localhost:8081/auth/" + savedUser.getId();
+            String token = restTemplate.postForObject(url, null, String.class);
+            // set token field in user object
+            savedUser.setToken(token);
+        }else
+            throw new InvalidPasswordException("Invalid password");
+
+
+        // save user object to database
+        return userRepository.save(savedUser);
+    }
+
+    @DeleteMapping("/logout/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void logoutUser(@PathVariable Long id, @RequestParam String token) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
+        // call authServer API to validate token and delete it
+        String url = "http://localhost:8081/auth/" + id;
+        String tokenAuth = restTemplate.getForObject(url,String.class);
+        if(tokenAuth.equals(token)){
+            restTemplate.delete(url);
+            user.setToken(null);
+            userRepository.save(user);
+        }
+        else
+            throw new UnauthorizedException("Token not matched");
+    }
+
 
     @PostMapping("/{userId}/follow")
     public ResponseEntity<String> followUser(@PathVariable("userId") Long userId, @RequestParam("followedId") Long followedId) {
