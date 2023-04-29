@@ -68,7 +68,7 @@ public class UserController {
 
     @GetMapping("{username}")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<User> getUserById(@PathVariable  String username){
+    public ResponseEntity<User> getUserByUsername(@PathVariable  String username){
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with username:" + username));
         return ResponseEntity.ok(user);
