@@ -65,7 +65,15 @@ public class UserController {
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with id:" + id));
         return ResponseEntity.ok(user);
     }
-    
+
+    @GetMapping("{username}")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<User> getUserById(@PathVariable  String username){
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not exist with username:" + username));
+        return ResponseEntity.ok(user);
+    }
+
     @PutMapping("{id}")
     public ResponseEntity<User> updateUserProfile(@PathVariable Long id, @RequestBody User updatedUser) {
         User user = userRepository.findById(id)
