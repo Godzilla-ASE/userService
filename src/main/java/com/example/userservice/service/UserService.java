@@ -1,7 +1,9 @@
 package com.example.userservice.service;
 
+import com.example.userservice.dto.UserInfoDTO;
 import com.example.userservice.exceptions.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import com.example.userservice.entity.User;
 import com.example.userservice.repository.UserRepository;
@@ -11,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
@@ -23,6 +26,9 @@ public class UserService {
 
     @Autowired
     private final UserRepository userRepository;
+    @Autowired
+    private RestTemplate restTemplate;
+
     public UserService(@Qualifier("userRepository") UserRepository userRepository) {
         this.userRepository = userRepository;
     }
@@ -79,6 +85,14 @@ public class UserService {
                 followed.setFans(String.join(",", followedIdList));
             }
             userRepository.save(followed);
+            // Notify
+            String url = "http://localhost:8080/notification";
+            UserInfoDTO userInfoDTO = new UserInfoDTO();
+            userInfoDTO.setUserid_to(Math.toIntExact(followedId));
+            userInfoDTO.setType("FOLLOW_USER");
+            userInfoDTO.setUserid_from(Math.toIntExact(userId));
+            userInfoDTO.setUserid_to(Math.toIntExact(followedId));
+            restTemplate.postForObject(url, userInfoDTO, Void.class);
         }else {
             throw new IllegalArgumentException("Cannot follow a user you are already followed.");
         }
