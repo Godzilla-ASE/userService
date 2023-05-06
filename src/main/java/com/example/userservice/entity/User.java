@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -27,13 +28,15 @@ public class User {
     private String password;
 
     @Column(name = "birthday")
-    private String birthday;
+    @Temporal(TemporalType.DATE)
+    private Date birthday;
 
     @Column(name = "token")
     private String token;
 
     @Column(name = "creationDate")
-    private String creationDate;
+    @Temporal(TemporalType.DATE)
+    private Date creationDate;
 
     @Column(name = "email")
     private String email;
@@ -42,13 +45,13 @@ public class User {
     private String location;
 
     @Column(name = "fans")
-    private String fans;
+    private String fans = "";
 
     @Column(name = "followings")
-    private String followings;
+    private String followings= "";
 
     @Column(name = "haters")
-    private String haters;
+    private String haters= "";
 
     @Column(name = "avatarUrl")
     private String avatarUrl;
