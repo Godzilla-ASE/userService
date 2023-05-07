@@ -62,7 +62,7 @@ public class UserController {
 
     @PostMapping("/login")
     @ResponseStatus(HttpStatus.OK)
-    public User loginUser(@RequestBody User user) {
+    public ResponseEntity<?> loginUser(@RequestBody User user) {
         User savedUser = userRepository.findByUsername(user.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with username" + user.getUsername()));
         if(user.getPassword().equals(savedUser.getPassword())){
@@ -72,11 +72,11 @@ public class UserController {
             // set token field in user object
             savedUser.setToken(token);
         }else
-            throw new InvalidPasswordException("Invalid password");
+            return ResponseEntity.status(HttpStatus.CONFLICT).body("Incorrect username or password");
 
 
         // save user object to database
-        return userRepository.save(savedUser);
+        return ResponseEntity.ok(savedUser);
     }
 
 

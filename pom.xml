@@ -14,7 +14,7 @@
     <name>user_service</name>
     <description>userservice</description>
     <properties>
-        <java.version>17.0.7</java.version>
+        <java.version>17</java.version>
     </properties>
     <dependencies>
         <dependency>

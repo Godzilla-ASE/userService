@@ -54,6 +54,6 @@ public class User {
     private String haters= "";
 
     @Column(name = "avatarUrl")
-    private String avatarUrl;
+    private String avatarUrl = "https://robohash.org/31.10.156.227.png";
 
 }

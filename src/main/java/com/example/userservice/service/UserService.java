@@ -86,13 +86,13 @@ public class UserService {
             }
             userRepository.save(followed);
             // Notify
-//            String url = "http://localhost:8080/notification";
-//            UserInfoDTO userInfoDTO = new UserInfoDTO();
-//            userInfoDTO.setUserid_to(Math.toIntExact(followedId));
-//            userInfoDTO.setType("FOLLOW_USER");
-//            userInfoDTO.setUserid_from(Math.toIntExact(userId));
-//            userInfoDTO.setUserid_to(Math.toIntExact(followedId));
-//            restTemplate.postForObject(url, userInfoDTO, Void.class);
+            String url = "http://localhost:8083/notification";
+            UserInfoDTO userInfoDTO = new UserInfoDTO();
+            userInfoDTO.setUserid_to(Math.toIntExact(followedId));
+            userInfoDTO.setType("FOLLOW_USER");
+            userInfoDTO.setUserid_from(Math.toIntExact(userId));
+            userInfoDTO.setUserid_to(Math.toIntExact(followedId));
+            restTemplate.postForObject(url, userInfoDTO, Void.class);
         }else {
             throw new IllegalArgumentException("Cannot follow a user you are already followed.");
         }
