@@ -49,7 +49,7 @@ public class UserController {
         Long userId = savedUser.getId();
 
         // call authServer API to generate token
-        String url = "http://localhost:8081/auth/" + userId;
+        String url = "http://auth:8081/auth/" + userId;
         String token = restTemplate.postForObject(url, null, String.class);
         // set token field in user object
         user.setToken(token);
@@ -67,7 +67,7 @@ public class UserController {
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with username" + user.getUsername()));
         if(user.getPassword().equals(savedUser.getPassword())){
             // call authServer API to generate token
-            String url = "http://localhost:8081/auth/" + savedUser.getId();
+            String url = "http://auth:8081/auth/" + savedUser.getId();
             String token = restTemplate.postForObject(url, null, String.class);
             // set token field in user object
             savedUser.setToken(token);
@@ -86,7 +86,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<User> updateUserProfile(@PathVariable Long id, @RequestBody User updatedUser, @RequestHeader("Authorization") String token) {
         // call authServer API to validate token and delete it
-        String url = "http://localhost:8081/auth/" + id;
+        String url = "http://auth:8081/auth/" + id;
         String tokenAuth = restTemplate.getForObject(url,String.class);
         if(!tokenAuth.equals(token))
             throw new UnauthorizedException("Token not matched");
@@ -112,7 +112,7 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<HttpStatus> deleteUser(@PathVariable long id, @RequestHeader("Authorization") String token){
         // call authServer API to validate token and delete it
-        String url = "http://localhost:8081/auth/" + id;
+        String url = "http://auth:8081/auth/" + id;
         String tokenAuth = restTemplate.getForObject(url,String.class);
         if(!tokenAuth.equals(token))
             throw new UnauthorizedException("Token not matched");
@@ -134,7 +134,7 @@ public class UserController {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
         // call authServer API to validate token and delete it
-        String url = "http://localhost:8081/auth/" + id;
+        String url = "http://auth:8081/auth/" + id;
         String tokenAuth = restTemplate.getForObject(url,String.class);
         if(tokenAuth.equals(token)){
             restTemplate.delete(url);
@@ -157,22 +157,6 @@ public class UserController {
         userService.followUser(userId, followedId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-//    @PostMapping("/{userId}/follow")
-//    public ResponseEntity<String> followUser(@PathVariable("userId") Long userId, @RequestParam("followedId") Long followedId, @RequestHeader("Authorization") String token) {
-//        // call authServer API to validate token
-//        String url = "http://localhost:8081/auth/" + userId;
-//        String tokenAuth = restTemplate.getForObject(url,String.class);
-//        if(!tokenAuth.equals(token))
-//            throw new UnauthorizedException("Token not matched");
-//        // userId是关注者，followedId是被关注者id
-//        // 判断是否是自己关注自己
-//        if (userId.equals(followedId)) {
-//            return ResponseEntity.status(HttpStatus.CONFLICT).body("Cannot follow yourself.");
-//        }
-//        // 调用 UserService 进行关注操作
-//        userService.followUser(userId, followedId);
-//        return new ResponseEntity<>(HttpStatus.OK);
-//    }
 
     @PutMapping("/{userId}/follow/{followedId}")
     public ResponseEntity<String> unfollowUser(@PathVariable("userId") Long userId, @PathVariable("followedId") Long followedId){
@@ -181,18 +165,6 @@ public class UserController {
         userService.unfollowUser(userId,followedId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
-
-//    @PutMapping("/{userId}/follow")
-//    public ResponseEntity<String> unfollowUser(@PathVariable("userId") Long userId, @RequestParam("followedId") Long followedId, @RequestHeader("Authorization") String token){
-//        // call authServer API to validate token and delete it
-//        String url = "http://localhost:8081/auth/" + userId;
-//        String tokenAuth = restTemplate.getForObject(url,String.class);
-//        if(!tokenAuth.equals(token))
-//            throw new UnauthorizedException("Token not matched");
-//        // 判断是否已关注自己并移除粉丝和关注者
-//        userService.unfollowUser(userId,followedId);
-//        return new ResponseEntity<>(HttpStatus.OK);
-//    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException e) {

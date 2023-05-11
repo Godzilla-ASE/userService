@@ -86,7 +86,7 @@ public class UserService {
             }
             userRepository.save(followed);
             // Notify
-            String url = "http://localhost:8083/notification";
+            String url = "http://notify:8083/notification";
             UserInfoDTO userInfoDTO = new UserInfoDTO();
             userInfoDTO.setUserid_to(Math.toIntExact(followedId));
             userInfoDTO.setType("FOLLOW_USER");
