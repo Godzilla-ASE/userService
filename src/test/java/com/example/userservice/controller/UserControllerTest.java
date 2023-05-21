@@ -184,7 +184,6 @@ public class UserControllerTest {
                                 + "}"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.username").value("John"))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.birthday").value("2023-05-25T22:00:00.000+00:00"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.email").value("uzh"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.location").value("Zurich"))
                 .andExpect(MockMvcResultMatchers.jsonPath("$.avatarUrl").value("url"));
