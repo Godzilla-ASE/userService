@@ -27,9 +27,6 @@ import static org.mockito.Mockito.*;
 @ActiveProfiles("test")
 public class UserControllerIntegrationTest {
 
-    @LocalServerPort
-    private int port;
-
     @MockBean
     private TestRestTemplate restTemplate;
 
@@ -55,7 +52,6 @@ public class UserControllerIntegrationTest {
                 .thenReturn(token);
 
         // Send POST request to create a new user
-        String url = "http://localhost:" + port + "/users";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         Mockito.when(restTemplate.exchange(Mockito.anyString(), Mockito.any(HttpMethod.class), Mockito.any(), Mockito.eq(User.class)))
