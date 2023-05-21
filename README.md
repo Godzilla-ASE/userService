@@ -72,6 +72,7 @@ In our unit testing:
 
 ### Integration Tests
 
+
 Integration tests are written to test the interaction between different components of the application, 
 such as testing the RESTful APIs and their integration with the database. 
 These tests ensure that the components work correctly together. Make sure to run authServer before running integration test.
