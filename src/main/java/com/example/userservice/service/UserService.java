@@ -33,18 +33,6 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public boolean checkIfUserExists(User user) {
-        Optional<User> userByUsername = userRepository.findByUsername(user.getUsername());
-        return userByUsername.isPresent();
-    }
-
-    public boolean checkPassword(User user){
-        Optional<User> userByUsername = userRepository.findByUsername(user.getUsername());
-        User userCheck = userByUsername.orElseThrow(() -> new RuntimeException("User not found"));
-        String password = userCheck.getPassword();
-        return password.equals(user.getPassword());
-    }
-
     public List<String> splitId(String idString){
         if (idString == null) {
             idString = "";
@@ -85,14 +73,7 @@ public class UserService {
                 followed.setFans(String.join(",", followedIdList));
             }
             userRepository.save(followed);
-            // Notify
-            String url = "http://notify:8083/notification";
-            UserInfoDTO userInfoDTO = new UserInfoDTO();
-            userInfoDTO.setUserid_to(Math.toIntExact(followedId));
-            userInfoDTO.setType("FOLLOW_USER");
-            userInfoDTO.setUserid_from(Math.toIntExact(userId));
-            userInfoDTO.setUserid_to(Math.toIntExact(followedId));
-            restTemplate.postForObject(url, userInfoDTO, Void.class);
+
         }else {
             throw new IllegalArgumentException("Cannot follow a user you are already followed.");
         }

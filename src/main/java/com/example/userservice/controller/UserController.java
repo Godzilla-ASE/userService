@@ -1,7 +1,7 @@
 package com.example.userservice.controller;
 
+import com.example.userservice.dto.UserInfoDTO;
 import com.example.userservice.entity.User;
-import com.example.userservice.exceptions.InvalidPasswordException;
 import com.example.userservice.exceptions.ResourceNotFoundException;
 import com.example.userservice.exceptions.UnauthorizedException;
 import com.example.userservice.repository.UserRepository;
@@ -16,8 +16,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.Objects;
 
 @CrossOrigin("*")
 @RestController
@@ -49,7 +48,7 @@ public class UserController {
         Long userId = savedUser.getId();
 
         // call authServer API to generate token
-        String url = "http://auth:8081/auth/" + userId;
+        String url = "http://localhost:8081/auth/" + userId;
         String token = restTemplate.postForObject(url, null, String.class);
         // set token field in user object
         user.setToken(token);
@@ -88,7 +87,7 @@ public class UserController {
         // call authServer API to validate token and delete it
         String url = "http://auth:8081/auth/" + id;
         String tokenAuth = restTemplate.getForObject(url,String.class);
-        if(!tokenAuth.equals(token))
+        if(!Objects.equals(tokenAuth, token))
             throw new UnauthorizedException("Token not matched");
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not exist with id: " + id));
@@ -114,7 +113,7 @@ public class UserController {
         // call authServer API to validate token and delete it
         String url = "http://auth:8081/auth/" + id;
         String tokenAuth = restTemplate.getForObject(url,String.class);
-        if(!tokenAuth.equals(token))
+        if(!Objects.equals(tokenAuth, token))
             throw new UnauthorizedException("Token not matched");
 
         User user = userRepository.findById(id)
@@ -136,7 +135,7 @@ public class UserController {
         // call authServer API to validate token and delete it
         String url = "http://auth:8081/auth/" + id;
         String tokenAuth = restTemplate.getForObject(url,String.class);
-        if(tokenAuth.equals(token)){
+        if(Objects.equals(tokenAuth, token)){
             restTemplate.delete(url);
             user.setToken(null);
             userRepository.save(user);
@@ -155,6 +154,14 @@ public class UserController {
         }
         // 调用 UserService 进行关注操作
         userService.followUser(userId, followedId);
+        // Notify
+        String url = "http://localhost:8083/notification";
+        UserInfoDTO userInfoDTO = new UserInfoDTO();
+        userInfoDTO.setUserid_to(Math.toIntExact(followedId));
+        userInfoDTO.setType("FOLLOW_USER");
+        userInfoDTO.setUserid_from(Math.toIntExact(userId));
+        userInfoDTO.setUserid_to(Math.toIntExact(followedId));
+        restTemplate.postForObject(url, userInfoDTO, Void.class);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

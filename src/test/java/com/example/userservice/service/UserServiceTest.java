@@ -1,54 +1,195 @@
 package com.example.userservice.service;
 
+import com.example.userservice.dto.UserInfoDTO;
 import com.example.userservice.entity.User;
 import com.example.userservice.exceptions.ResourceNotFoundException;
 import com.example.userservice.repository.UserRepository;
+import com.example.userservice.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
+import org.springframework.web.client.RestTemplate;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
-class UserServiceTest {
+public class UserServiceTest {
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private RestTemplate restTemplate;
 
     @InjectMocks
     private UserService userService;
 
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+        restTemplate = spy(new RestTemplate());
+    }
+
     @Test
-    public void testFollowUser() {
-        // 创建测试用户数据
+    public void testFollowUser_Success_empty() {
+        // Prepare test data
+        Long userId = 1L;
+        Long followedId = 2L;
         User follower = new User();
-        follower.setUsername("follower");
+        follower.setId(userId);
         follower.setFollowings("");
-        when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(follower));
-
         User followed = new User();
-        followed.setUsername("followed");
+        followed.setId(followedId);
         followed.setFans("");
-        when(userRepository.findById(2L)).thenReturn(java.util.Optional.of(followed));
 
-        // 获取测试用户的 ID
-        Long followerId = 1L;
+        // Mock UserRepository behavior
+        when(userRepository.findById(userId)).thenReturn(Optional.of(follower));
+        when(userRepository.findById(followedId)).thenReturn(Optional.of(followed));
+
+         // Call the method to test
+        userService.followUser(userId, followedId);
+
+        // Verify the changes
+        assertEquals(String.valueOf(followedId), follower.getFollowings());
+        assertEquals(String.valueOf(userId), followed.getFans());
+
+        // Verify the UserRepository method calls
+        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(1)).findById(followedId);
+        verify(userRepository, times(1)).save(follower);
+        verify(userRepository, times(1)).save(followed);
+    }
+    @Test
+    public void testFollowUser_Success_notEmpty() {
+        // Prepare test data
+        Long userId = 1L;
+        Long followedId = 2L;
+        User follower = new User();
+        follower.setId(userId);
+        follower.setFollowings("3");
+        User followed = new User();
+        followed.setId(followedId);
+        followed.setFans("4");
+
+        // Mock UserRepository behavior
+        when(userRepository.findById(userId)).thenReturn(Optional.of(follower));
+        when(userRepository.findById(followedId)).thenReturn(Optional.of(followed));
+
+        // Call the method to test
+        userService.followUser(userId, followedId);
+
+        // Verify the changes
+        assertEquals("3,2", follower.getFollowings());
+        assertEquals("4,1", followed.getFans());
+
+        // Verify the UserRepository method calls
+        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(1)).findById(followedId);
+        verify(userRepository, times(1)).save(follower);
+        verify(userRepository, times(1)).save(followed);
+    }
+
+    @Test
+    public void testFollowUser_InvalidUserId() {
+        // Prepare test data
+        Long userId = 1L;
         Long followedId = 2L;
 
-        // 调用 followUser 方法进行关注操作
-        userService.followUser(followerId, followedId);
+        // Mock UserRepository behavior
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        // 验证关注操作是否成功
-        follower = userRepository.findById(followerId).get();
-        followed = userRepository.findById(followedId).get();
-        List<String> followerIdList = Arrays.asList(follower.getFollowings().split(","));
-        List<String> followedIdList = Arrays.asList(followed.getFans().split(","));
-        assertTrue(followerIdList.contains(String.valueOf(followedId)));
-        assertTrue(followedIdList.contains(String.valueOf(followerId)));
+        // Call the method and verify the exception
+        assertThrows(ResourceNotFoundException.class, () -> userService.followUser(userId, followedId));
+
+        // Verify the UserRepository method calls
+        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, never()).findById(followedId);
+        verify(userRepository, never()).save(any(User.class));
+
     }
+
+    @Test
+    public void testFollowUser_alreadyFollowed_Fail() {
+        // Prepare test data
+        Long userId = 1L;
+        Long followedId = 2L;
+        User follower = new User();
+        follower.setId(userId);
+        follower.setFollowings("2");
+        User followed = new User();
+        followed.setId(followedId);
+        followed.setFans("1");
+        // Mock UserRepository behavior
+        when(userRepository.findById(userId)).thenReturn(Optional.of(follower));
+        when(userRepository.findById(followedId)).thenReturn(Optional.of(followed));
+
+        // Call the method and verify the exception
+        assertThrows(IllegalArgumentException.class, () -> userService.followUser(userId, followedId));
+
+        // Verify the UserRepository method calls
+        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(1)).findById(followedId);
+
+    }
+
+    @Test
+    public void testFollowUser_alreadyFan_Fail() {
+        // Prepare test data
+        Long userId = 1L;
+        Long followedId = 2L;
+        User follower = new User();
+        follower.setId(userId);
+        follower.setFollowings("");
+        User followed = new User();
+        followed.setId(followedId);
+        followed.setFans("1");
+        // Mock UserRepository behavior
+        when(userRepository.findById(userId)).thenReturn(Optional.of(follower));
+        when(userRepository.findById(followedId)).thenReturn(Optional.of(followed));
+
+        // Call the method and verify the exception
+        assertThrows(IllegalArgumentException.class, () -> userService.followUser(userId, followedId));
+
+        // Verify the UserRepository method calls
+        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(1)).findById(followedId);
+    }
+
+    @Test
+    public void testUnfollowUser_Success() {
+        // Prepare test data
+        Long userId = 1L;
+        Long followedId = 2L;
+        User follower = new User();
+        follower.setId(userId);
+        follower.setFollowings("2");
+        User followed = new User();
+        followed.setId(followedId);
+        followed.setFans("1");
+
+        // Mock UserRepository behavior
+        when(userRepository.findById(userId)).thenReturn(Optional.of(follower));
+        when(userRepository.findById(followedId)).thenReturn(Optional.of(followed));
+
+        // Call the method to test
+        userService.unfollowUser(userId, followedId);
+
+        // Verify the changes
+        assertEquals("", follower.getFollowings());
+        assertEquals("", followed.getFans());
+
+        // Verify the UserRepository method calls
+        verify(userRepository, times(1)).findById(userId);
+        verify(userRepository, times(1)).findById(followedId);
+        verify(userRepository, times(1)).save(follower);
+        verify(userRepository, times(1)).save(followed);
+    }
+
+
+
 }
