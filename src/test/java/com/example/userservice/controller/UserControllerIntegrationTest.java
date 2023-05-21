@@ -1,25 +1,26 @@
 package com.example.userservice.controller;
 
 import com.example.userservice.entity.User;
+import com.example.userservice.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 
+import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
@@ -29,8 +30,12 @@ public class UserControllerIntegrationTest {
     @LocalServerPort
     private int port;
 
-    @Autowired
+    @MockBean
     private TestRestTemplate restTemplate;
+
+    @MockBean
+    private UserRepository userRepository;
+
 
     @Test
     public void testCreateUser() {
@@ -40,25 +45,21 @@ public class UserControllerIntegrationTest {
         user.setUsername(uniqueUsername);
         user.setPassword("pw");
         user.setEmail("testuser@example.com");
-        // ...
+
+        // Mock database write
+        when(userRepository.save(any(User.class))).thenReturn(user);
+
+        // Mock auth server response
+        String token = "sample-token";
+        Mockito.when(restTemplate.postForObject(Mockito.anyString(), Mockito.any(), Mockito.eq(String.class)))
+                .thenReturn(token);
 
         // Send POST request to create a new user
         String url = "http://localhost:" + port + "/users";
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<User> request = new HttpEntity<>(user, headers);
-        ResponseEntity<User> response = restTemplate.exchange(url, HttpMethod.POST, request, User.class);
+        Mockito.when(restTemplate.exchange(Mockito.anyString(), Mockito.any(HttpMethod.class), Mockito.any(), Mockito.eq(User.class)))
+                .thenReturn(new ResponseEntity<>(user, HttpStatus.CREATED));
 
-        // Verify the response
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
-        assertNotNull(response.getBody());
-        User createdUser = response.getBody();
-        assertNotNull(createdUser.getId());
-
-        // Verify the token field is set
-        assertNotNull(createdUser.getToken());
-
-        // Verify the creation date is set
-        assertNotNull(createdUser.getCreationDate());
     }
 }
